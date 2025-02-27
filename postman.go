@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"os"
 	"time"
 	"github.com/xuri/excelize/v2"
 )
@@ -150,22 +151,49 @@ func main() {
 	rankerList["2nd"] = second
 	rankerList["3rd"] = third
 
-	if (*exportToJSON == "json"){
-		jsonAverage, _ := json.MarshalIndent(averages, "", "    ")
-		jsonBranchwiseAverage, _ := json.MarshalIndent(branchwiseAverage, "", "    ")
-
-		jsonRankerList, _ := json.MarshalIndent(rankerList, "", "	")
-		jsonErrorList, _ := json.MarshalIndent(errorList, "", "    ")
-
-		fmt.Println(string(jsonErrorList))
-		fmt.Println(string(jsonAverage))
-		fmt.Println(string(jsonBranchwiseAverage))
-		fmt.Println(string(jsonRankerList))
-	}
 	
+	//Printing the summary of the data
+	fmt.Printf("The discrepancy found in the table: \n")
+	for _, value := range errorList {
+		fmt.Printf("There is a error at Serial No. %s \t Expected Total Marks: %f \t Given: %f \n", value.ErrorIndex, value.ExpectedTotal, value.ActualTotal)
+	}
+	fmt.Println()
+	
+	fmt.Printf("The averages of each components: \n")
+	for key, value := range averages {
+		fmt.Println(key, value)
+	}
+	fmt.Println()
+
+	fmt.Printf("The Total Averages Batch-wise: \n")
+	for key, value := range branchwiseAverage {
+		fmt.Println(key, value)
+	}
+	fmt.Println()
+
 	fmt.Printf("Class topper are : \n")
 	fmt.Printf("1st \t Emplid %s \t Marks %f \n", first.Emplid, first.Marks)
 	fmt.Printf("2nd \t Emplid %s \t Marks %f \n", second.Emplid, second.Marks)
 	fmt.Printf("3rd \t Emplid %s \t Marks %f \n", third.Emplid, third.Marks)
+	fmt.Println()
 
+
+	// exporting the data is JSON Format
+	if *exportToJSON == "json" {
+		data := map[string]interface{}{
+			"errors": 				errorList, 
+			"average": 				averages, 
+			"branchwise-average": 	branchwiseAverage, 
+			"rankers": 				rankerList,
+		}
+
+
+		jsonData, _ := json.MarshalIndent(data, "", "	")
+		err = os.WriteFile("report.json", jsonData, 0644)
+		if err != nil {
+			fmt.Println("Error writing JSON to file:", err)
+		} else {
+			fmt.Println("Data successfully exported to report.json")
+		}
+	}
 }
